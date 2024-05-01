@@ -19,6 +19,15 @@ NVector::NVector(uint8_t num_dimensions, float *values) {
     this->data = values;
 }
 
+NVector::NVector(const NVector& other) {
+    num_dimensions = other.num_dimensions;
+    data = new float[num_dimensions];
+
+
+    for (uint8_t d = 0; d < num_dimensions; ++d)
+        data[d] = other.data[d];
+}
+
 NVector NVector::operator+(const NVector& other) const {
     NVector result(num_dimensions, 0.0);
 
@@ -28,6 +37,11 @@ NVector NVector::operator+(const NVector& other) const {
     return result;
 }
 
+void NVector::operator+=(const NVector& other) {
+    for (uint8_t d = 0; d < num_dimensions; ++d)
+        data[d] += other.data[d];
+}
+
 NVector NVector::operator-(const NVector& other) const {
     NVector result(num_dimensions, 0.0);
 
@@ -35,6 +49,11 @@ NVector NVector::operator-(const NVector& other) const {
         result.data[d] = this->data[d] - other.data[d];
 
     return result;
+}
+
+void NVector::operator/=(const float scalar) {
+    for (uint8_t d = 0; d < num_dimensions; ++d)
+        data[d] /= scalar;
 }
 
 float& NVector::operator[](const uint8_t index) const {
