@@ -5,10 +5,12 @@ from PIL import Image
 import numpy as np
 
 def main():
-    if len(sys.argv) == 3:
-        infile_path = str(sys.argv[1])
-        outdir = str(sys.argv[2])
+    if len(sys.argv) == 4:
+        image_name = str(sys.argv[1])
+        infile_path = str(sys.argv[2])
+        outdir = str(sys.argv[3])
     else:
+        image_name = str(input("Enter a image name: "))
         infile_path = str(input("Enter the image data filepath: "))
         outdir = str(input("Enter the output directory: "))
 
@@ -55,7 +57,7 @@ def main():
     data = data * 255
 
     image = Image.fromarray(data.astype(np.uint8))
-    outfile = f"{num_pixels}_{num_channels}D_{len(centroids)}_image.tiff"
+    outfile = f"{image_name}_{num_pixels}_{num_channels}D_{len(centroids)}C_image.tiff"
     image.save(outdir + outfile, "TIFF")
 
 if __name__ == "__main__":
