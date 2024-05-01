@@ -3,7 +3,7 @@
 
 #include <fmt/core.h>
 
-#include "kmeans.hpp"
+#include "serial/kmeans.hpp"
 #include "nvector.hpp"
 
 std::vector<NVector> random_centroids(uint32_t num_centroids, uint8_t num_dimensions, float min, float max) {

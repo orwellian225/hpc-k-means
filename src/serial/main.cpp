@@ -8,7 +8,7 @@
 
 #include "nvector.hpp"
 #include "support.hpp"
-#include "kmeans.hpp"
+#include "serial/kmeans.hpp"
 
 int main(int argc, char **argv) {
 

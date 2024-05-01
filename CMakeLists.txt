@@ -11,10 +11,10 @@ set(CMAKE_CXX_EXTENSIONS Off)
 add_subdirectory(lib/fmt)
 
 add_executable(kmeans-serial
-    serial/src/main.cpp serial/src/support.cpp serial/src/kmeans.cpp
-    src/nvector.cpp
+    src/serial/main.cpp src/serial/kmeans.cpp
+    src/nvector.cpp src/support.cpp
 )
-target_include_directories(kmeans-serial PUBLIC include serial/include PUBLIC lib/fmt/include)
-target_link_directories(kmeans-serial PRIVATE src serial/src lib/fmt/src)
+target_include_directories(kmeans-serial PUBLIC include PUBLIC lib/fmt/include)
+target_link_directories(kmeans-serial PRIVATE src lib/fmt/src)
 target_link_libraries(kmeans-serial fmt)
 
