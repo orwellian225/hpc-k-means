@@ -29,8 +29,8 @@ void kmeans(const std::vector<NVector>& points, uint32_t num_classes, uint32_t m
     }
     centroids = std::vector<NVector>(temp_centroids, temp_centroids + num_classes);
 
-    for (uint32_t i = 0; i < centroids.size(); ++i) {
-        fmt::println("Centroid {}: {}", i, centroids[i].to_string());
-    }
+    // for (uint32_t i = 0; i < centroids.size(); ++i) {
+    //     fmt::println("Centroid {}: {}", i, centroids[i].to_string());
+    // }
 
 }
