@@ -37,6 +37,11 @@ std::vector<point_class> classify_kmeans(const std::vector<NVector>& points, std
     std::vector<point_class> classifications;
 
     for (uint32_t i = 0; i < max_iterations; ++i) {
+        if (i % 5 == 0) {
+            fmt::print("\rIteration {: <7} of {: <7}", i, max_iterations);
+            fflush(stdout);
+        }
+
         classifications.clear();
 
         for (size_t p = 0; p < points.size(); ++p) {
@@ -52,7 +57,7 @@ std::vector<point_class> classify_kmeans(const std::vector<NVector>& points, std
 
         // reset centroids
         for (uint32_t k = 0; k < num_classes; ++k)
-            for (uint8_t d = 0; d < num_dimensions; ++d)
+            for (uint8_t d = 0; d < num_dimensions; ++d) 
                 centroids[k][d] = 0.0;
 
         // update centroids to mean of all points in the class
@@ -62,8 +67,9 @@ std::vector<point_class> classify_kmeans(const std::vector<NVector>& points, std
             centroids[current_class] += points[p]; 
             points_per_class[current_class] += 1.;
         }
+
         for (uint32_t k = 0; k < num_classes; ++k)
-            centroids[k] /= points_per_class[k];
+            centroids[k] /= points_per_class[k] != 0 ? points_per_class[k] : 1;
 
         // Convergence check
         bool converged = true;
@@ -79,5 +85,6 @@ std::vector<point_class> classify_kmeans(const std::vector<NVector>& points, std
             previous_centroids.push_back(NVector(centroids[k]));
     }
 
+    fmt::println("");
     return classifications;
 }

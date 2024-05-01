@@ -50,7 +50,7 @@ std::vector<NVector> load_points(uint32_t num_points, uint8_t num_dimensions, st
 }
 
 void save_classification(const std::vector<NVector>& points, const std::vector<NVector>& centroids, const std::vector<std::pair<size_t, uint32_t>>& classifications, std::string outfile_path) {
-    FILE *outfile = fopen(outfile_path.c_str(), "r+");
+    FILE *outfile = fopen(outfile_path.c_str(), "w+");
     if (outfile == nullptr) {
         fmt::println(stderr, "Failed to open file {}", outfile_path);
         exit(EXIT_FAILURE);

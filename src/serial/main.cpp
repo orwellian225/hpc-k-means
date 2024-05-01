@@ -31,28 +31,15 @@ int main(int argc, char **argv) {
     uint32_t num_classes = std::atoi(argv[5]);
     uint32_t max_iterations = std::atoi(argv[6]);
 
-    if (!access(infile_path.c_str(), F_OK)) {
+    if (access(infile_path.c_str(), R_OK) != 0) {
         fmt::println(stderr, "Cannot find file {}", infile_path);
         exit(EXIT_FAILURE);
     }
 
-    if (!access(outfile_path.c_str(), F_OK)) {
-        fmt::println(stderr, "Cannot find file {}", outfile_path);
-        exit(EXIT_FAILURE);
-    }
-
     std::vector<NVector> points = load_points(num_points, num_dimensions, infile_path);
-    float max_range = points.size() - points.size() / 2., min_range = -max_range;
+    float max_range = 0., min_range = 1.;
     std::vector<NVector> centroids = random_centroids(num_classes, num_dimensions, min_range, max_range);
     std::vector<point_class> classifications = classify_kmeans(points, centroids, max_iterations);
-
-    /** OUTFILE FORMAT
-     *      Points
-     *      <blank line>
-     *      Centroids
-     *      <blank line>
-     *      Point classes <point idx>,<class idx>
-     */
 
     save_classification(points, centroids, classifications, outfile_path);
 
