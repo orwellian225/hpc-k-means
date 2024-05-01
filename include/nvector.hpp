@@ -8,6 +8,7 @@ struct NVector {
     uint8_t num_dimensions;
     float *data;
 
+    NVector(): num_dimensions(0), data(nullptr) {};
     NVector(uint8_t num_dimensions, float initial_value);
     NVector(uint8_t num_dimensions, float *values);
 
