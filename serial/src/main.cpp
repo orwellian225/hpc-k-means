@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
 
     std::vector<NVector> points = load_points(num_points, num_dimensions, infile);
 
-    kmeans(points, num_classes, max_iterations);
+    classify_kmeans(points, num_classes, max_iterations);
 
     fclose(infile);
 
