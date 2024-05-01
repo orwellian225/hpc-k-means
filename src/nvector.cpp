@@ -19,7 +19,7 @@ NVector::NVector(uint8_t num_dimensions, float *values) {
     this->data = values;
 }
 
-NVector NVector::operator+(const NVector& other) {
+NVector NVector::operator+(const NVector& other) const {
     NVector result(num_dimensions, 0.0);
 
     for (uint8_t d = 0; d < num_dimensions; ++d)
@@ -28,7 +28,7 @@ NVector NVector::operator+(const NVector& other) {
     return result;
 }
 
-NVector NVector::operator-(const NVector& other) {
+NVector NVector::operator-(const NVector& other) const {
     NVector result(num_dimensions, 0.0);
 
     for (uint8_t d = 0; d < num_dimensions; ++d)
@@ -37,11 +37,11 @@ NVector NVector::operator-(const NVector& other) {
     return result;
 }
 
-float& NVector::operator[](const uint8_t index) {
+float& NVector::operator[](const uint8_t index) const {
     return data[index];
 }
 
-float NVector::dot(const NVector& other) {
+float NVector::dot(const NVector& other) const {
     float result;
 
     for (uint8_t d = 0; d < num_dimensions; ++d)
@@ -50,7 +50,7 @@ float NVector::dot(const NVector& other) {
     return result;
 }
 
-float NVector::distance_to(const NVector& other) {
+float NVector::distance_to(const NVector& other) const {
     float result;
 
     for (uint8_t d = 0; d < num_dimensions; ++d)
@@ -59,7 +59,7 @@ float NVector::distance_to(const NVector& other) {
     return std::sqrt(result);
 }
 
-float NVector::magnitude() {
+float NVector::magnitude() const {
     float result;
 
     for (uint8_t d = 0; d < num_dimensions; ++d)
@@ -75,7 +75,7 @@ void NVector::normalize() {
         data[d] /= magnitude;
 }
 
-NVector NVector::normalize_clone() {
+NVector NVector::normalize_clone() const {
     NVector result(num_dimensions, 0.0);
     float magnitude = this->magnitude();
 
@@ -85,16 +85,20 @@ NVector NVector::normalize_clone() {
     return result;
 }
 
-std::string NVector::to_string() {
+std::string NVector::to_string() const {
+    std::string result = fmt::format("{}", data[0]);
+    for (uint8_t d = 1; d < num_dimensions; ++d)
+        result = fmt::format("{}, {}", result, data[d]);
+
+    return result;
+}
+
+std::string NVector::to_csv_string() const {
     std::string result = fmt::format("{}", data[0]);
     for (uint8_t d = 1; d < num_dimensions; ++d)
         result = fmt::format("{},{}", result, data[d]);
 
     return result;
-}
-
-std::string NVector::to_csv_string() {
-    return this->to_string();
 }
 
 NVector::~NVector() {

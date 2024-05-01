@@ -12,18 +12,18 @@ struct NVector {
     NVector(uint8_t num_dimensions, float initial_value);
     NVector(uint8_t num_dimensions, float *values);
 
-    NVector operator+(const NVector& other);
-    NVector operator-(const NVector& other);
-    float& operator[](const uint8_t index);
-    float dot(const NVector& other);
-    float distance_to(const NVector& other);
+    NVector operator+(const NVector& other) const;
+    NVector operator-(const NVector& other) const;
+    float& operator[](const uint8_t index) const;
+    float dot(const NVector& other) const;
+    float distance_to(const NVector& other) const;
 
-    float magnitude();
+    float magnitude() const;
     void normalize();
-    NVector normalize_clone();
+    NVector normalize_clone() const;
 
-    std::string to_string();
-    std::string to_csv_string();
+    std::string to_string() const;
+    std::string to_csv_string() const;
 
     ~NVector();
 };

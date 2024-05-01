@@ -8,6 +8,7 @@
 
 #include "nvector.hpp"
 #include "support.hpp"
+#include "kmeans.hpp"
 
 int main(int argc, char **argv) {
 
@@ -36,6 +37,9 @@ int main(int argc, char **argv) {
     for (uint32_t i = 0; i < num_points; ++i) {
         fmt::println("Point {}: {}", i, points[i].to_string());
     }
+
+
+    kmeans(points, 3, 10);
 
     fclose(infile);
 
