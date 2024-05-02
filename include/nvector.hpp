@@ -13,6 +13,7 @@ struct NVector {
     NVector(uint8_t num_dimensions, float *values);
     NVector(const NVector& other);
 
+    void operator=(const NVector& other);
     NVector operator+(const NVector& other) const;
     void operator+=(const NVector& other);
     NVector operator-(const NVector& other) const;
@@ -27,6 +28,8 @@ struct NVector {
 
     std::string to_string() const;
     std::string to_csv_string() const;
+
+    NVector clone() const;
 
     ~NVector();
 };

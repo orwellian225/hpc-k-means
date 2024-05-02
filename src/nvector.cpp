@@ -23,9 +23,14 @@ NVector::NVector(const NVector& other) {
     num_dimensions = other.num_dimensions;
     data = new float[num_dimensions];
 
-
     for (uint8_t d = 0; d < num_dimensions; ++d)
         data[d] = other.data[d];
+
+}
+
+void NVector::operator=(const NVector& other) {
+    num_dimensions = other.num_dimensions;
+    data = other.data;
 }
 
 NVector NVector::operator+(const NVector& other) const {
@@ -117,6 +122,16 @@ std::string NVector::to_csv_string() const {
     for (uint8_t d = 1; d < num_dimensions; ++d)
         result = fmt::format("{},{}", result, data[d]);
 
+    return result;
+}
+
+NVector NVector::clone() const {
+    float *new_data = new float[num_dimensions];
+
+    for (uint8_t d = 0; d < num_dimensions; ++d)
+        new_data[d] = data[d];
+
+    NVector result(num_dimensions, new_data);
     return result;
 }
 
