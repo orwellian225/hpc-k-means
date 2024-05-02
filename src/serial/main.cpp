@@ -1,3 +1,5 @@
+#include <chrono>
+#include <ratio>
 #include <stdio.h>
 #include <unistd.h>
 #include <stdint.h>
@@ -37,11 +39,17 @@ int main(int argc, char **argv) {
     }
 
     std::vector<NVector> points = load_points(num_points, num_dimensions, infile_path);
-    float max_range = 0., min_range = 1.;
-    std::vector<NVector> centroids = random_centroids(num_classes, num_dimensions, min_range, max_range);
-    std::vector<point_class> classifications = classify_kmeans(points, centroids, max_iterations);
+    float max_range = points.size() - points.size() / 2., min_range = -max_range;
 
+    auto start = std::chrono::high_resolution_clock::now();
+    /* std::vector<NVector> centroids = random_centroids(num_classes, num_dimensions, min_range, max_range); */
+    std::vector<NVector> centroids = kmeansplusplus_centroids(num_classes, num_dimensions, points);
+    std::vector<point_class> classifications = classify_kmeans(points, centroids, max_iterations);
+    auto end = std::chrono::high_resolution_clock::now();
+
+    std::chrono::duration<float, std::milli> duration(end - start);
     save_classification(points, centroids, classifications, outfile_path);
+    fmt::println("Time: {:.2f} ms", duration.count());
 
     return 0;
 }
