@@ -77,9 +77,8 @@ int main(int argc, char **argv) {
             centroids[i / num_dimensions][d] = merged_dimension_data[i + d];
         }
     }
-
+    std::vector<uint32_t> classifications = classify_kmeans(points, centroids, max_iterations, world_rank, world_size, MPI_COMM_WORLD);
     double end = MPI_Wtime();
-
 
     if (world_rank == 0) {
         double duration = end - start;
