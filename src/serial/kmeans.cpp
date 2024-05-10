@@ -88,7 +88,7 @@ std::vector<NVector> kmeansplusplus_centroids(uint32_t num_centroids, uint8_t nu
 }
 
 
-std::vector<point_class> classify_kmeans(const std::vector<NVector>& points, std::vector<NVector>& centroids, uint32_t max_iterations) {
+std::vector<uint32_t> classify_kmeans(const std::vector<NVector>& points, std::vector<NVector>& centroids, uint32_t max_iterations) {
     uint8_t num_dimensions = points[0].num_dimensions;
     uint32_t num_classes = centroids.size();
 
@@ -96,7 +96,7 @@ std::vector<point_class> classify_kmeans(const std::vector<NVector>& points, std
     for (uint32_t k = 0; k < num_classes; ++k)
         previous_centroids.push_back(NVector(centroids[k]));
 
-    std::vector<point_class> classifications;
+    std::vector<uint32_t> classifications;
 
     for (uint32_t i = 0; i < max_iterations; ++i) {
         fmt::print("\rIteration {: <7} of {: <7}", i, max_iterations);
@@ -112,7 +112,7 @@ std::vector<point_class> classify_kmeans(const std::vector<NVector>& points, std
                 }
             }
 
-            classifications.push_back({ p, closest_class });
+            classifications.push_back(closest_class);
         }
 
         // reset centroids
@@ -123,7 +123,7 @@ std::vector<point_class> classify_kmeans(const std::vector<NVector>& points, std
         // update centroids to mean of all points in the class
         std::vector<float> points_per_class(num_classes, 0.);
         for (size_t p = 0; p < points.size(); ++p) {
-            uint32_t current_class = classifications[p].second;
+            uint32_t current_class = classifications[p];
             centroids[current_class] += points[p]; 
             points_per_class[current_class] += 1.;
         }

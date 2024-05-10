@@ -49,7 +49,7 @@ std::vector<NVector> load_points(uint32_t num_points, uint8_t num_dimensions, st
     return std::vector<NVector>(points, points + num_points);
 }
 
-void save_classification(const std::vector<NVector>& points, const std::vector<NVector>& centroids, const std::vector<std::pair<size_t, uint32_t>>& classifications, std::string outfile_path) {
+void save_classification(const std::vector<NVector>& points, const std::vector<NVector>& centroids, const std::vector<uint32_t>& classifications, std::string outfile_path) {
     FILE *outfile = fopen(outfile_path.c_str(), "w+");
     if (outfile == nullptr) {
         fmt::println(stderr, "Failed to open file {}", outfile_path);
@@ -62,8 +62,8 @@ void save_classification(const std::vector<NVector>& points, const std::vector<N
     for (auto centroid: centroids)
         fmt::println(outfile, "{}", centroid.to_csv_string());
     fmt::println(outfile, "");
-    for (auto classification: classifications)
-        fmt::println(outfile, "{},{}", classification.first, classification.second);
+    for (uint32_t p = 0; p < classifications.size(); ++p)
+        fmt::println(outfile, "{},{}", p, classifications[p]);
 
     fclose(outfile);
 }

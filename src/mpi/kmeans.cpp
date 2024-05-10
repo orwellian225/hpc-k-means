@@ -137,7 +137,7 @@ std::vector<uint32_t> classify_kmeans(
             local_class_count[local_classifications[p]] += 1;
         }
 
-        MPI_Reduce(local_class_count, global_class_count, num_classes, MPI_UINT32_T, MPI_SUM, 0, comm_rank);
+        MPI_Reduce(local_class_count, global_class_count, num_classes, MPI_UINT32_T, MPI_SUM, 0, comm);
         for (uint8_t d = 0; d < num_dimensions; ++d)
             MPI_Reduce(local_dimensional_sums[d], global_dimensional_sums[d], num_classes, MPI_FLOAT, MPI_SUM, 0, comm);
         // Phase 2 - update + convergance || iteration check
@@ -178,17 +178,14 @@ std::vector<uint32_t> classify_kmeans(
 
         // Broadcast the centroids
         if (comm_rank == 0) {
-            std::vector<NVector> generated_centroids = kmeansplusplus_centroids(num_classes, num_dimensions, points);
-            // send to all nodes
-
             for (size_t i = 0; i < num_classes * num_dimensions; i += num_dimensions) {
                 for (uint8_t d = 0; d < num_dimensions; ++d)
-                    merged_dimension_data[i + d] = generated_centroids[i / num_dimensions].data[d];
+                    merged_dimension_data[i + d] = new_centroids[i / num_dimensions].data[d];
             }
 
         } 
 
-        MPI_Bcast(merged_dimension_data, num_classes * num_dimensions, MPI_FLOAT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(merged_dimension_data, num_classes * num_dimensions, MPI_FLOAT, 0, comm);
 
         for (size_t i = 0; i < num_classes * num_dimensions; i += num_dimensions) {
             centroids.push_back(NVector(num_dimensions, 0.0));

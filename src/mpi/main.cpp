@@ -80,6 +80,7 @@ int main(int argc, char **argv) {
     std::vector<uint32_t> classifications = classify_kmeans(points, centroids, max_iterations, world_rank, world_size, MPI_COMM_WORLD);
     double end = MPI_Wtime();
 
+    save_classification(points, centroids, classifications, outfile_path);
     if (world_rank == 0) {
         double duration = end - start;
         // save_classification(points, centroids, classifications, outfile_path);

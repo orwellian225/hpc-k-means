@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
 
     auto start = std::chrono::high_resolution_clock::now();
     std::vector<NVector> centroids = kmeansplusplus_centroids(num_classes, num_dimensions, points);
-    std::vector<point_class> classifications = classify_kmeans(points, centroids, max_iterations);
+    std::vector<uint32_t> classifications = classify_kmeans(points, centroids, max_iterations);
     auto end = std::chrono::high_resolution_clock::now();
 
     std::chrono::duration<float, std::milli> duration(end - start);
