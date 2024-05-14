@@ -195,7 +195,6 @@ std::vector<uint32_t> classify_kmeans(
                     new_centroids[dimension * k + d] /= num_classifications_per_class[k];
         }
 
-
         MPI_Bcast(new_centroids, num_classes, nvec_row_t, 0, comm);
 
         bool all_centroids_converged = true;
@@ -212,10 +211,10 @@ std::vector<uint32_t> classify_kmeans(
     // Last Classification
     for (uint32_t i = 0; i < num_local_points; ++i) {
         uint32_t closest_centroid = 0;
-        float closest_distance = vec_distance(&points[dimension * i], &centroids[dimension * closest_centroid], dimension);
+        float closest_distance = vec_distance(&local_points[dimension * i], &centroids[dimension * closest_centroid], dimension);
 
         for (uint32_t j = 1; j < num_classes; ++j) {
-            float next_distance = vec_distance(&points[dimension * i], &centroids[dimension * j], dimension);
+            float next_distance = vec_distance(&local_points[dimension * i], &centroids[dimension * j], dimension);
             if (next_distance < closest_distance) {
                 closest_distance = next_distance;
                 closest_centroid = j;
