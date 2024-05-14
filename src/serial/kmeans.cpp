@@ -99,8 +99,8 @@ std::vector<uint32_t> classify_kmeans(const std::vector<NVector>& points, std::v
     std::vector<uint32_t> classifications;
 
     for (uint32_t i = 0; i < max_iterations; ++i) {
-        fmt::print("\rIteration {: <7} of {: <7}", i, max_iterations);
-        fflush(stdout);
+        // fmt::print("\rIteration {: <7} of {: <7}", i, max_iterations);
+        // fflush(stdout);
 
         classifications.clear();
 

@@ -5,14 +5,16 @@ from PIL import Image
 import numpy as np
 
 def main():
-    if len(sys.argv) == 4:
+    if len(sys.argv) == 5:
         image_name = str(sys.argv[1])
         infile_path = str(sys.argv[2])
         outdir = str(sys.argv[3])
+        algorithm_type = str(sys.argv[4])
     else:
         image_name = str(input("Enter a image name: "))
         infile_path = str(input("Enter the image data filepath: "))
         outdir = str(input("Enter the output directory: "))
+        algorithm_type = str(input("Enter the algorithm type (Serial / MPI / CUDA): "))
 
     points = []
     centroids = []
@@ -57,7 +59,7 @@ def main():
     data = data * 255
 
     image = Image.fromarray(data.astype(np.uint8))
-    outfile = f"{image_name}_{num_pixels}_{num_channels}D_{len(centroids)}C_image.tiff"
+    outfile = f"{image_name}_{num_pixels}_{num_channels}D_{len(centroids)}C_image_{algorithm_type}.tiff"
     image.save(outdir + outfile, "TIFF")
 
 if __name__ == "__main__":
