@@ -7,8 +7,8 @@
 
 num_points=$(($3*$3))
 file_name="${1}_${num_points}_3D_image.csv"
-serial_file_name="${1}_${num_points}_3D_image_${4}_serial.csv"
-mpi_file_name="${1}_${num_points}_3D_image_${4}_mpi.csv"
+serial_file_name="${1}_${num_points}_3D_${4}C_image_serial.csv"
+mpi_file_name="${1}_${num_points}_3D_${4}C_image_mpi.csv"
 
 python3 scripts/image_to_data.py $1 $2 data/
 build/kmeans-serial 3 $num_points data/$file_name results/$serial_file_name $4 10000

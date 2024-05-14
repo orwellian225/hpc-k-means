@@ -65,7 +65,7 @@ int main(int argc, char **argv) {
             for (size_t d = 0; d < num_dimensions; ++d)
                 points[num_dimensions * i + d] = points_vec[i][d];
 
-        for (size_t i = 0; i < num_classes; ++i)
+        for (size_t i = 0; i < num_classes; ++i) 
             for (size_t d = 0; d < num_dimensions; ++d)
                 centroids[num_dimensions * i + d] = generated_centroids[i][d];
     } 
@@ -77,15 +77,23 @@ int main(int argc, char **argv) {
 
     std::vector<NVector> points_vec, centroid_vec;
     for (size_t i = 0; i < num_points; ++i) {
-        points_vec.push_back(NVector(num_dimensions, points[num_dimensions * i]));
+        NVector temp(num_dimensions, 0.);
+        for (uint8_t d = 0; d < num_dimensions; ++d)
+            temp[d] = points[num_dimensions * i + d];
+
+        points_vec.push_back(temp);
     }
 
     for (size_t i = 0; i < num_classes; ++i) {
-        centroid_vec.push_back(NVector(num_dimensions, centroids[num_dimensions * i]));
+        NVector temp(num_dimensions, 0.);
+        for (uint8_t d = 0; d < num_dimensions; ++d)
+            temp[d] = centroids[num_dimensions * i + d];
+
+        centroid_vec.push_back(temp);
     }
 
     if (world_rank == 0) {
-        double duration = end - start;
+        double duration = (end - start) * 1000; // MPI_Wtime is in seconds
         save_classification(points_vec, centroid_vec, classifications, outfile_path);
         fmt::println("Time: {:.2f} ms", duration);
     }

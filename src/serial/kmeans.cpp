@@ -146,6 +146,5 @@ std::vector<uint32_t> classify_kmeans(const std::vector<NVector>& points, std::v
             previous_centroids.push_back(NVector(centroids[k]));
     }
 
-    fmt::println("");
     return classifications;
 }

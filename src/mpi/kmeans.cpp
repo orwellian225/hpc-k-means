@@ -5,6 +5,7 @@
 #include <random>
 #include <tuple>
 #include <mpi.h>
+#include <stdio.h>
 
 #include <fmt/core.h>
 
@@ -78,28 +79,6 @@ float vec_distance(const float *vec_1, const float *vec_2, uint8_t dimension) {
     return std::sqrt(sum);
 }
 
-void vec_sum(void *in, void *inout, int *len, MPI_Datatype *type) {
-    MPI_Aint begin, extent;
-    MPI_Type_get_extent(*type, &begin, &extent);
-    size_t dimension = extent / sizeof(float);
-
-    float *in_float= (float*)(in);
-    float *inout_float = (float*)(inout);
-
-    for (size_t i = 0; i < *len; ++i) {
-        for (uint8_t d = 0; d < dimension; ++d) {
-            // fmt::println("{} {}: {}", i, d, inout_float[i + d]);
-            // fmt::println("{} {}: {}", i, d, in_float[i + d]);
-            inout_float[i + d] += in_float[d];
-        }
-
-        in_float += dimension;
-        inout_float += dimension;
-    }
-
-    // fmt::println("here");
-}
-
 std::vector<uint32_t> classify_kmeans(
     const uint8_t dimension, const uint32_t num_points, const uint32_t num_classes,
     const float *points,
@@ -115,8 +94,6 @@ std::vector<uint32_t> classify_kmeans(
 
     MPI_Type_commit(&nvec_row_t);
     MPI_Type_commit(&nvec_col_t);
-
-    MPI_Op_create(vec_sum, true, &nvec_row_sum);
 
     uint32_t num_local_points = num_points / size + (rank < (num_points % size));
     int32_t *process_point_distribution = new int32_t[size];
@@ -149,6 +126,14 @@ std::vector<uint32_t> classify_kmeans(
     //     fmt::print("\tPoint {} ", p);
     //     for (uint8_t d = 0; d < dimension; ++d)
     //         fmt::print("{} ", local_points[dimension * p + d]);
+    //     fmt::println("");
+    // }
+
+    // fmt::println("{} Centroids", rank);
+    // for (uint32_t k = 0; k < num_classes; ++k) {
+    //     fmt::print("\tCentroid {} ", k);
+    //     for (uint8_t d = 0; d < dimension; ++d)
+    //         fmt::print("{} ", centroids[dimension * k + d]);
     //     fmt::println("");
     // }
 
@@ -206,6 +191,7 @@ std::vector<uint32_t> classify_kmeans(
 
         for (uint32_t i = 0; i < num_classes * dimension; ++i)
             centroids[i] = new_centroids[i];
+
     }
 
     // Last Classification
@@ -238,7 +224,6 @@ std::vector<uint32_t> classify_kmeans(
     delete[] local_new_centroids, new_centroids;
 
     MPI_Type_free(&nvec_row_t);
-    MPI_Op_free(&nvec_row_sum);
 
     return results;
 }
