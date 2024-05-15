@@ -14,7 +14,7 @@
 
 std::vector<NVector> kmeansplusplus_centroids(uint32_t num_centroids, uint8_t num_dimensions, const std::vector<NVector> &points) {
     std::random_device device;
-    std::mt19937 rng(device());
+    std::mt19937 rng(0);
     std::uniform_int_distribution<size_t> points_uniform_distribution(0, points.size());
 
     std::vector<NVector> centroids;
@@ -74,7 +74,7 @@ float vec_distance(const float *vec_1, const float *vec_2, uint8_t dimension) {
 
     float sum = 0;
     for (uint8_t d = 0; d < dimension; ++d)
-        sum = (vec_1[d] - vec_2[d]) * (vec_1[d] - vec_2[d]);
+        sum += (vec_1[d] - vec_2[d]) * (vec_1[d] - vec_2[d]);
 
     return std::sqrt(sum);
 }
@@ -113,30 +113,6 @@ std::vector<uint32_t> classify_kmeans(
     float *local_new_centroids = new float[num_classes * dimension];
     float *new_centroids = new float[num_classes * dimension];
 
-    // fmt::println("{} Initial", rank);
-    // for (uint32_t k = 0; k < num_classes; ++k) {
-    //     fmt::print("\tCentroid {} ", k);
-    //     for (uint8_t d = 0; d < dimension; ++d)
-    //         fmt::print("{} ", centroids[dimension * k + d]);
-    //     fmt::println("");
-    // }
-
-    // fmt::println("{} Points", rank);
-    // for (uint32_t p = 0; p < num_local_points; ++p) {
-    //     fmt::print("\tPoint {} ", p);
-    //     for (uint8_t d = 0; d < dimension; ++d)
-    //         fmt::print("{} ", local_points[dimension * p + d]);
-    //     fmt::println("");
-    // }
-
-    // fmt::println("{} Centroids", rank);
-    // for (uint32_t k = 0; k < num_classes; ++k) {
-    //     fmt::print("\tCentroid {} ", k);
-    //     for (uint8_t d = 0; d < dimension; ++d)
-    //         fmt::print("{} ", centroids[dimension * k + d]);
-    //     fmt::println("");
-    // }
-
     for (uint32_t iteration = 0; iteration < max_iterations; ++iteration) {
         // Classify points
 
@@ -151,11 +127,11 @@ std::vector<uint32_t> classify_kmeans(
             uint32_t closest_centroid = 0;
             float closest_distance = vec_distance(&local_points[dimension * i], &centroids[dimension * closest_centroid], dimension);
 
-            for (uint32_t j = 1; j < num_classes; ++j) {
-                float next_distance = vec_distance(&local_points[dimension * i], &centroids[dimension * j], dimension);
+            for (uint32_t k = 0; k < num_classes; ++k) {
+                float next_distance = vec_distance(&local_points[dimension * i], &centroids[dimension * k], dimension);
                 if (next_distance < closest_distance) {
                     closest_distance = next_distance;
-                    closest_centroid = j;
+                    closest_centroid = k;
                 }
             }
 
@@ -183,8 +159,9 @@ std::vector<uint32_t> classify_kmeans(
         MPI_Bcast(new_centroids, num_classes, nvec_row_t, 0, comm);
 
         bool all_centroids_converged = true;
-        for (uint32_t k = 0; k < num_classes; ++k)
+        for (uint32_t k = 0; k < num_classes; ++k) {
             all_centroids_converged = all_centroids_converged && vec_distance(&new_centroids[dimension * k], &centroids[dimension * k], dimension) < 1e-3;
+        }
 
         if (all_centroids_converged)
             break;

@@ -13,7 +13,7 @@
 
 std::vector<NVector> random_centroids(uint32_t num_centroids, uint8_t num_dimensions, float min, float max) {
     std::random_device device;
-    std::mt19937 rng(device());
+    std::mt19937 rng(0);
     std::uniform_real_distribution<float> centroid_distribution(min, max);
 
     NVector *temp_centroids = new NVector[num_centroids];
@@ -31,7 +31,7 @@ std::vector<NVector> random_centroids(uint32_t num_centroids, uint8_t num_dimens
 
 std::vector<NVector> kmeansplusplus_centroids(uint32_t num_centroids, uint8_t num_dimensions, const std::vector<NVector> &points) {
     std::random_device device;
-    std::mt19937 rng(device());
+    std::mt19937 rng(0);
     std::uniform_int_distribution<size_t> points_uniform_distribution(0, points.size());
 
     std::vector<NVector> centroids;
@@ -99,9 +99,6 @@ std::vector<uint32_t> classify_kmeans(const std::vector<NVector>& points, std::v
     std::vector<uint32_t> classifications;
 
     for (uint32_t i = 0; i < max_iterations; ++i) {
-        // fmt::print("\rIteration {: <7} of {: <7}", i, max_iterations);
-        // fflush(stdout);
-
         classifications.clear();
 
         for (size_t p = 0; p < points.size(); ++p) {
@@ -134,7 +131,6 @@ std::vector<uint32_t> classify_kmeans(const std::vector<NVector>& points, std::v
         // Convergence check
         bool converged = true;
         for (uint32_t k = 0; k < num_classes; ++k) {
-            /* fmt::println("({}) -> ({}) = {}", centroids[k].to_string(), previous_centroids[k].to_string(), centroids[k].distance_to(previous_centroids[k])); */
             converged = converged && centroids[k].distance_to(previous_centroids[k]) < 1e-3;
         }
 

@@ -75,7 +75,7 @@ float NVector::dot(const NVector& other) const {
 }
 
 float NVector::distance_to(const NVector& other) const {
-    float result;
+    float result = 0;
 
     for (uint8_t d = 0; d < num_dimensions; ++d)
         result += (this->data[d] - other.data[d]) * (this->data[d] - other.data[d]);
