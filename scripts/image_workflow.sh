@@ -21,4 +21,5 @@ python3 scripts/results_to_image.py $1 results/$serial_file_name results/images/
 python3 scripts/results_to_image.py $1 results/$mpi_file_name results/images/ mpi
 python3 scripts/results_to_image.py $1 results/$cuda_file_name results/images/ cuda
 
-python3 scripts/diff_checker.py results/$serial_file_name results/$mpi_file_name results/$cuda_file_name
+python3 scripts/class_loss.py $num_points $4 results/$serial_file_name results/$mpi_file_name results/$cuda_file_name
+python3 scripts/class_error.py $num_points $4 results/$serial_file_name results/$mpi_file_name results/$cuda_file_name
