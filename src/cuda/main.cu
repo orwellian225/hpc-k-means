@@ -70,5 +70,5 @@ int main(int argc, char **argv) {
         points, centroids, classes,
         outfile_path
     );
-    fmt::println("Time: {:.2f} ms", duration_ms);
+    fmt::println("{:.4f}", duration_ms);
 }

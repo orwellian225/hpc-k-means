@@ -86,7 +86,7 @@ int main(int argc, char **argv) {
             points, centroids, classes,
             outfile_path
         );
-        fmt::println("Time: {:.2f} ms", duration);
+        fmt::println("{:.4f}", duration);
     }
 
     MPI_Finalize();
