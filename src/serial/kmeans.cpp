@@ -76,13 +76,12 @@ void kmeans(
 
         bool converged = true;
         for (uint32_t k = 0; k < num_classes; ++k)
-            converged = converged && nvec_distance(&centroids[dimension * k], &new_centroids[dimension * k], dimension);
+            converged = converged && nvec_distance(&centroids[dimension * k], &new_centroids[dimension * k], dimension) < 1e-3;
 
         if (converged)
             break;
 
-        for (uint32_t i = 0; i < dimension * num_classes; ++i)
-            centroids[i] = new_centroids[i];
+        memcpy(centroids, new_centroids, num_classes * dimension * sizeof(float));
     }
 
     classify_points(

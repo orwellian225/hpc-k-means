@@ -99,7 +99,7 @@ void init_centroids(
     uint32_t most_recent_centroid = 0;
 
     for (uint8_t d = 0; d < dimension; ++d)
-        centroids[dimension * 0 + d] = points[selected_points[0]];
+        centroids[dimension * 0 + d] = points[dimension * selected_points[0] + d];
 
     float *probabilites = new float[num_points];
     for (uint32_t k = 1; k < num_classes; ++k) {
@@ -144,7 +144,7 @@ void init_centroids(
         selected_points[most_recent_centroid] = distance_dist(rng);
 
         for (uint8_t d = 0; d < dimension; ++d)
-            centroids[dimension * most_recent_centroid + d] = points[selected_points[most_recent_centroid]];
+            centroids[dimension * most_recent_centroid + d] = points[dimension * selected_points[most_recent_centroid] + d];
     }
     delete[] probabilites;
 
