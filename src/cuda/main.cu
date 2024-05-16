@@ -35,8 +35,10 @@ int main(int argc, char **argv) {
     cudaEvent_t start, end;
     float duration_ms;
 
-    float *centroids = new float[num_classes * num_dimensions];
     float *points = new float[num_points * num_dimensions];
+    float *centroids = new float[num_classes * num_dimensions];
+    uint32_t *classes = new uint32_t[num_points];
+
     load_points(num_points, num_dimensions, points, infile_path);
 
     cudaEventCreate(&start);
@@ -49,7 +51,11 @@ int main(int argc, char **argv) {
         0
     );
 
-    std::vector<uint32_t> classifications = classify_kmeans(num_dimensions, num_points, num_classes, points, centroids, max_iterations);
+    classify_kmeans(
+        num_dimensions, num_points, num_classes,
+        points, centroids, classes,
+        max_iterations
+    );
 
     cudaEventRecord(end, 0);
     cudaEventSynchronize(end);
@@ -60,7 +66,7 @@ int main(int argc, char **argv) {
 
     save_classifications(
         num_points, num_classes, num_dimensions,
-        points, centroids, classifications.data(),
+        points, centroids, classes,
         outfile_path
     );
     fmt::println("Time: {:.2f} ms", duration_ms);

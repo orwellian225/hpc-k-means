@@ -10,78 +10,11 @@
 #include <fmt/core.h>
 
 #include "mpi/kmeans.hpp"
-#include "nvector.hpp"
+#include "support.hpp"
 
-std::vector<NVector> kmeansplusplus_centroids(uint32_t num_centroids, uint8_t num_dimensions, const std::vector<NVector> &points) {
-    std::random_device device;
-    std::mt19937 rng(0);
-    std::uniform_int_distribution<size_t> points_uniform_distribution(0, points.size());
-
-    std::vector<NVector> centroids;
-
-    std::vector<size_t> selected_points;
-    selected_points.push_back(points_uniform_distribution(rng));
-    size_t most_recent_centroid = 0;
-
-    centroids.push_back(NVector(points[selected_points[0]]));
-
-    for (size_t i = 1; i < num_centroids; ++i) {
-
-        std::vector<float> probabilities(points.size());
-        for (size_t p = 0; p < points.size(); ++p) {
-
-            bool selected_point_before = false;
-            for (auto sp: selected_points) {
-                if (sp == p) {
-                    probabilities[p] = 0.;
-                    selected_point_before = true;
-                    break;
-                }
-            }
-            if (selected_point_before)
-                continue;
-            
-
-            size_t closest_centroid = 0;
-            float distance_to_max = points[p].distance_to(centroids[closest_centroid]);
-            probabilities[p] = distance_to_max;
-            for (size_t j = 0; j < most_recent_centroid; ++j) {
-                float distance_to_current = points[p].distance_to(centroids[j]);
-                if (distance_to_current < distance_to_max) {
-                    closest_centroid = j;
-                    probabilities[p] = distance_to_current;
-                }
-            }
-        }
-
-        float sum_sqr_distances = 0;
-        for (auto d: probabilities)
-            sum_sqr_distances += d*d;
-        for (auto d: probabilities)
-            d /= sum_sqr_distances;
-
-        std::discrete_distribution<size_t> points_distance_distribution(probabilities.begin(), probabilities.end());
-        ++most_recent_centroid;
-        selected_points.push_back(points_distance_distribution(rng));
-
-        centroids.push_back(points[selected_points[most_recent_centroid]]);
-    }
-
-    return centroids;
-}
-
-float vec_distance(const float *vec_1, const float *vec_2, uint8_t dimension) {
-    float sum = 0;
-    for (uint8_t d = 0; d < dimension; ++d)
-        sum += (vec_1[d] - vec_2[d]) * (vec_1[d] - vec_2[d]);
-
-    return std::sqrt(sum);
-}
-
-std::vector<uint32_t> classify_kmeans(
+void classify_kmeans(
     const uint8_t dimension, const uint32_t num_points, const uint32_t num_classes,
-    const float *points,
-    float *centroids,
+    const float *points, float *centroids, uint32_t *classes,
     uint32_t max_iterations,
     const int32_t rank, const int32_t size, const MPI_Comm comm
 ) {
@@ -124,10 +57,10 @@ std::vector<uint32_t> classify_kmeans(
 
         for (uint32_t i = 0; i < num_local_points; ++i) {
             uint32_t closest_centroid = 0;
-            float closest_distance = vec_distance(&local_points[dimension * i], &centroids[dimension * closest_centroid], dimension);
+            float closest_distance = nvec_distance(&local_points[dimension * i], &centroids[dimension * closest_centroid], dimension);
 
             for (uint32_t k = 0; k < num_classes; ++k) {
-                float next_distance = vec_distance(&local_points[dimension * i], &centroids[dimension * k], dimension);
+                float next_distance = nvec_distance(&local_points[dimension * i], &centroids[dimension * k], dimension);
                 if (next_distance < closest_distance) {
                     closest_distance = next_distance;
                     closest_centroid = k;
@@ -159,7 +92,7 @@ std::vector<uint32_t> classify_kmeans(
 
         bool all_centroids_converged = true;
         for (uint32_t k = 0; k < num_classes; ++k) {
-            all_centroids_converged = all_centroids_converged && vec_distance(&new_centroids[dimension * k], &centroids[dimension * k], dimension) < 1e-3;
+            all_centroids_converged = all_centroids_converged && nvec_distance(&new_centroids[dimension * k], &centroids[dimension * k], dimension) < 1e-3;
         }
 
         if (all_centroids_converged)
@@ -173,10 +106,10 @@ std::vector<uint32_t> classify_kmeans(
     // Last Classification
     for (uint32_t i = 0; i < num_local_points; ++i) {
         uint32_t closest_centroid = 0;
-        float closest_distance = vec_distance(&local_points[dimension * i], &centroids[dimension * closest_centroid], dimension);
+        float closest_distance = nvec_distance(&local_points[dimension * i], &centroids[dimension * closest_centroid], dimension);
 
         for (uint32_t j = 1; j < num_classes; ++j) {
-            float next_distance = vec_distance(&local_points[dimension * i], &centroids[dimension * j], dimension);
+            float next_distance = nvec_distance(&local_points[dimension * i], &centroids[dimension * j], dimension);
             if (next_distance < closest_distance) {
                 closest_distance = next_distance;
                 closest_centroid = j;
@@ -187,12 +120,7 @@ std::vector<uint32_t> classify_kmeans(
         local_classifications[i] = closest_centroid;
     }
 
-    uint32_t *classifications = new uint32_t[num_points];
-    MPI_Gatherv(local_classifications, num_local_points, MPI_INT, classifications, process_point_distribution, process_point_displacements, MPI_INT, 0, comm);
-
-    std::vector<uint32_t> results;
-    if (rank == 0) 
-        results = std::vector<uint32_t>(classifications, classifications + num_points);
+    MPI_Gatherv(local_classifications, num_local_points, MPI_INT, classes, process_point_distribution, process_point_displacements, MPI_INT, 0, comm);
 
     delete[] process_point_distribution, process_point_displacements;
     delete[] local_classifications;
@@ -200,6 +128,4 @@ std::vector<uint32_t> classify_kmeans(
     delete[] local_new_centroids, new_centroids;
 
     MPI_Type_free(&nvec_row_t);
-
-    return results;
 }
