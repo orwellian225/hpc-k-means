@@ -38,15 +38,54 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    std::vector<NVector> points = load_points(num_points, num_dimensions, infile_path);
+    std::vector<NVector> points_vec = load_points(num_points, num_dimensions, infile_path);
+
+    float *points = new float[num_dimensions * num_points];
+    float *centroids = new float[num_dimensions * num_classes];
+    uint32_t *classes = new uint32_t[num_points];
+
+    for (size_t i = 0; i < num_points; ++i)
+        for (size_t d = 0; d < num_dimensions; ++d)
+            points[num_dimensions * i + d] = points_vec[i][d];
 
     auto start = std::chrono::high_resolution_clock::now();
-    std::vector<NVector> centroids = kmeansplusplus_centroids(num_classes, num_dimensions, points);
-    std::vector<uint32_t> classifications = classify_kmeans(points, centroids, max_iterations);
+    
+    init_centroids(
+        num_points, num_classes, num_dimensions, 
+        points, centroids,
+        0
+    );
+
+    kmeans(
+        num_points, num_classes, num_dimensions, 
+        points, centroids, classes, 
+        max_iterations, nullptr
+    );
+
     auto end = std::chrono::high_resolution_clock::now();
 
     std::chrono::duration<float, std::milli> duration(end - start);
-    save_classification(points, centroids, classifications, outfile_path);
+
+    std::vector<NVector> centroid_vec;
+    points_vec.clear();
+    for (size_t i = 0; i < num_points; ++i) {
+        NVector temp(num_dimensions, 0.);
+        for (uint8_t d = 0; d < num_dimensions; ++d)
+            temp[d] = points[num_dimensions * i + d];
+
+        points_vec.push_back(temp);
+    }
+
+    for (size_t i = 0; i < num_classes; ++i) {
+        NVector temp(num_dimensions, 0.);
+        for (uint8_t d = 0; d < num_dimensions; ++d)
+            temp[d] = centroids[num_dimensions * i + d];
+
+        centroid_vec.push_back(temp);
+    }
+
+    std::vector<uint32_t> classifications(classes, classes + num_points);
+    save_classification(points_vec, centroid_vec, classifications, outfile_path);
     fmt::println("Time: {:.2f} ms", duration.count());
 
     return 0;

@@ -35,22 +35,23 @@ int main(int argc, char **argv) {
     cudaEvent_t start, end;
     float duration_ms;
 
-    cudaEventCreate(&start);
-    cudaEventCreate(&end);
-
-    cudaEventRecord(start, 0);
-
     float *centroids = new float[num_classes * num_dimensions];
     float *points = new float[num_points * num_dimensions];
     std::vector<NVector> points_loaded_vec = load_points(num_points, num_dimensions, infile_path);
-    std::vector<NVector> generated_centroids = kmeansplusplus_centroids(num_classes, num_dimensions, points_loaded_vec);
+
     for (size_t i = 0; i < num_points; ++i)
         for (size_t d = 0; d < num_dimensions; ++d)
             points[num_dimensions * i + d] = points_loaded_vec[i][d];
 
-    for (size_t i = 0; i < num_classes; ++i) 
-        for (size_t d = 0; d < num_dimensions; ++d)
-            centroids[num_dimensions * i + d] = generated_centroids[i][d];
+    cudaEventCreate(&start);
+    cudaEventCreate(&end);
+
+    cudaEventRecord(start, 0);
+    init_centroids(
+        num_points, num_classes, num_dimensions, 
+        points, centroids,
+        0
+    );
 
     std::vector<uint32_t> classifications = classify_kmeans(num_dimensions, num_points, num_classes, points, centroids, max_iterations);
 

@@ -1,9 +1,16 @@
 #pragma once
 
-#include <vector>
+#include <stdint.h>
 
-#include "nvector.hpp"
+#include "support.hpp"
 
-std::vector<NVector> random_centroids(uint32_t num_centroids, uint8_t num_dimensions, float min, float max);
-std::vector<NVector> kmeansplusplus_centroids(uint32_t num_centroids, uint8_t num_dimensions, const std::vector<NVector>& points);
-std::vector<uint32_t> classify_kmeans(const std::vector<NVector>& points, std::vector<NVector>& centroids, uint32_t max_iterations);
+float nvec_distance(const float *nvec_a, const float *nvec_b, const uint8_t dimension);
+void classify_points(
+    const uint32_t num_points, const uint32_t num_classes, const uint8_t dimension, 
+    const float *points, float *centroids, uint32_t *classes
+);
+void kmeans(
+    const uint32_t num_points, const uint32_t num_classes, const uint8_t dimension, 
+    const float *points, float *centroids, uint32_t *classes, 
+    const uint32_t max_iterations, TimeBreakdown *timer
+);

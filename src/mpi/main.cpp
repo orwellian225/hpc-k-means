@@ -51,23 +51,26 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    double start = MPI_Wtime();
-
     float *centroids = new float[num_classes * num_dimensions];
     float *points = new float[num_points * num_dimensions];
-    
+
     if (world_rank == 0) {
         std::vector<NVector> points_vec = load_points(num_points, num_dimensions, infile_path);
-        std::vector<NVector> generated_centroids = kmeansplusplus_centroids(num_classes, num_dimensions, points_vec);
         // send to all nodes
 
         for (size_t i = 0; i < num_points; ++i)
             for (size_t d = 0; d < num_dimensions; ++d)
                 points[num_dimensions * i + d] = points_vec[i][d];
+    }
 
-        for (size_t i = 0; i < num_classes; ++i) 
-            for (size_t d = 0; d < num_dimensions; ++d)
-                centroids[num_dimensions * i + d] = generated_centroids[i][d];
+    double start = MPI_Wtime();
+
+    if (world_rank == 0) {
+        init_centroids(
+            num_points, num_classes, num_dimensions, 
+            points, centroids,
+            0
+        );
     } 
 
     MPI_Bcast(centroids, num_classes * num_dimensions, MPI_FLOAT, 0, MPI_COMM_WORLD);
