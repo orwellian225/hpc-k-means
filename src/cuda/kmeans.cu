@@ -1,8 +1,20 @@
 #include <vector>
 #include <random>
 
+#include <fmt/core.h>
+
 #include "cuda/kmeans.cuh"
 #include "nvector.hpp"
+
+void handle_cuda_error(cudaError_t error) {
+    if (error == cudaSuccess)
+        return;
+    
+    fmt::println(stderr, "CUDA Error:");
+    fmt::println(stderr, "\t{}", cudaGetErrorString(error));
+    cudaDeviceReset();
+    exit(EXIT_FAILURE);
+}
 
 std::vector<NVector> kmeansplusplus_centroids(uint32_t num_centroids, uint8_t num_dimensions, const std::vector<NVector> &points) { 
     std::mt19937 rng(0);
@@ -82,7 +94,7 @@ __device__ float d_vec_distance(float *vec_1, float *vec_2, uint8_t dimension) {
 }
 
 __global__ void classify(cudaTextureObject_t points, float *centroids, uint32_t *classifications) {
-    int point_idx = blockIdx.x * blockDim.x * threadIdx.x;
+    int point_idx = blockIdx.x * blockDim.x + threadIdx.x;
 
     if (point_idx >= d_num_points) {
         return;
@@ -101,55 +113,19 @@ __global__ void classify(cudaTextureObject_t points, float *centroids, uint32_t 
         point[d] = tex1Dfetch<float>(points, d_dimension * point_idx + d);
 
     uint32_t closest_centroid = 0;
-    float closest_distance = d_vec_distance(point, &centroids[0], d_dimension);
+    float closest_distance = d_vec_distance(point, &shared_centroids[d_dimension * closest_centroid], d_dimension);
     float next_distance;
 
     for (uint32_t k = 0; k < d_num_classes; ++k) {
-        next_distance = d_vec_distance(point, &centroids[k], d_dimension);
+        next_distance = d_vec_distance(point, &shared_centroids[d_dimension * k], d_dimension);
         if (next_distance < closest_distance) {
+            closest_distance = next_distance;
             closest_centroid = k;
         }
     }
 
     classifications[point_idx] = closest_centroid; 
-}
-
-__global__ void update_centroids(cudaTextureObject_t points, float *centroids, uint32_t *class_counts, uint32_t *classifications) {
-    int point_idx = blockIdx.x * blockDim.x * threadIdx.x;
-
-    if (point_idx >= d_num_points) {
-        return;
-    }
-
-    extern __shared__ uint32_t shared_classifications[];
-    shared_classifications[threadIdx.x] = classifications[point_idx];
-
-    __syncthreads();
-
-    if (threadIdx.x == 0) {
-        float *local_centroid_sums = new float[d_dimension * d_num_classes];
-        uint32_t *local_class_counts = new uint32_t[d_num_classes];
-
-        for (uint32_t j = 0; j < blockDim.x; ++j) {
-            for (uint8_t d = 0; d < d_dimension; ++d)
-                local_centroid_sums[d_dimension * shared_classifications[j] + d] += tex1Dfetch<float>(points, d_dimension * j + d);
-
-            local_class_counts[shared_classifications[j]] += 1;
-        }
-
-        for (uint32_t k = 0; k < d_num_classes; ++k) {
-            for (uint8_t d = 0; d < d_dimension; ++d)
-                atomicAdd(&centroids[d_dimension * k + d], local_centroid_sums[d_dimension * k + d]);
-            atomicAdd(&class_counts[k], local_class_counts[k]);
-        }
-    }
-
-    __syncthreads();
-
-    if (point_idx < d_num_classes) {
-        for (uint8_t d = 0; d < d_dimension; ++d)
-            centroids[d_dimension * point_idx + d] = centroids[d_dimension * point_idx + d] / class_counts[point_idx];
-    }
+    delete[] point;
 }
 
 std::vector<uint32_t> classify_kmeans(
@@ -161,7 +137,8 @@ std::vector<uint32_t> classify_kmeans(
 
     // Send points to texture memory
     float *d_points;
-    cudaMalloc(&d_points, num_points * dimension * sizeof(float));
+    handle_cuda_error(cudaMalloc(&d_points, num_points * dimension * sizeof(float)));
+    handle_cuda_error(cudaMemcpy(d_points, points, num_points * dimension * sizeof(float), cudaMemcpyHostToDevice));
     
     cudaResourceDesc points_res_desc;
     memset(&points_res_desc, 0, sizeof(points_res_desc));
@@ -169,54 +146,57 @@ std::vector<uint32_t> classify_kmeans(
     points_res_desc.res.linear.devPtr = d_points;
     points_res_desc.res.linear.desc.f = cudaChannelFormatKindFloat;
     points_res_desc.res.linear.sizeInBytes = num_points * dimension * sizeof(float);
+    points_res_desc.res.linear.desc.x = 32;
 
     cudaTextureDesc points_tex_desc;
     memset(&points_tex_desc, 0, sizeof(points_tex_desc));
     points_tex_desc.readMode = cudaReadModeElementType;
 
     cudaTextureObject_t points_tex;
-    cudaCreateTextureObject(&points_tex, &points_res_desc, &points_tex_desc, nullptr);
+    handle_cuda_error(cudaCreateTextureObject(&points_tex, &points_res_desc, &points_tex_desc, nullptr));
 
     const size_t block_size = 1024; 
     const size_t grid_size = num_points / block_size + 1;
 
-    uint32_t *d_num_points, *d_num_classes;
-    uint8_t *d_dimension;
-    cudaMalloc(&d_num_points, sizeof(uint32_t));
-    cudaMalloc(&d_num_classes, sizeof(uint32_t));
-    cudaMalloc(&d_dimension, sizeof(uint8_t));
+    // handle_cuda_error(cudaMalloc(&d_num_points, sizeof(uint32_t)));
+    // handle_cuda_error(cudaMalloc(&d_num_classes, sizeof(uint32_t)));
+    // handle_cuda_error(cudaMalloc(&d_dimension, sizeof(uint8_t)));
 
-    cudaMemcpyToSymbol(d_num_points, &num_points, sizeof(uint32_t), 0, cudaMemcpyHostToDevice);
-    cudaMemcpyToSymbol(d_num_classes, &num_classes, sizeof(uint32_t), 0, cudaMemcpyHostToDevice);
-    cudaMemcpyToSymbol(d_dimension, &dimension, sizeof(uint8_t), 0, cudaMemcpyHostToDevice);
+    handle_cuda_error(cudaMemcpyToSymbol(d_num_points, &num_points, sizeof(num_points)));
+    handle_cuda_error(cudaMemcpyToSymbol(d_num_classes, &num_classes, sizeof(num_classes)));
+    handle_cuda_error(cudaMemcpyToSymbol(d_dimension, &dimension, sizeof(dimension)));
 
     uint32_t *classifications = new uint32_t[num_points];
     uint32_t *d_classifications;
-    cudaMalloc(&d_classifications, num_points * sizeof(uint32_t));
+    handle_cuda_error(cudaMalloc(&d_classifications, num_points * sizeof(uint32_t)));
 
     float *d_centroids;
-    cudaMalloc(&d_centroids, num_classes * dimension * sizeof(float));
+    handle_cuda_error(cudaMalloc(&d_centroids, num_classes * dimension * sizeof(float)));
 
     float *new_centroids = new float[dimension * num_classes];
-    uint32_t *d_class_counts;
-    cudaMalloc(&d_class_counts, num_points * sizeof(uint32_t));
+    uint32_t *d_class_counts, *class_counts = new uint32_t[num_classes];
+    handle_cuda_error(cudaMalloc(&d_class_counts, num_points * sizeof(uint32_t)));
     // In loop
     for (uint32_t iteration = 0; iteration < max_iterations; ++iteration) {
         // send centroids to GPU
-        cudaMemcpy(&d_centroids, &centroids, num_classes * dimension * sizeof(float), cudaMemcpyHostToDevice);
-
-        // Perform classification
+        handle_cuda_error(cudaMemcpy(d_centroids, centroids, num_classes * dimension * sizeof(float), cudaMemcpyHostToDevice));
         classify<<<grid_size, block_size, num_classes * dimension * sizeof(float)>>>(points_tex, d_centroids, d_classifications);
-        // cudaMemcpy(classifications, d_classifications, num_points * sizeof(uint32_t), cudaMemcpyDeviceToHost);
+        cudaDeviceSynchronize();
+        handle_cuda_error(cudaMemcpy(classifications, d_classifications, num_points * sizeof(uint32_t), cudaMemcpyDeviceToHost));
 
-        // update centroids with gpu reduction
-        // reset d_centroids and d_class_counts so they can be used to sum the new values
-        cudaMemset(&d_centroids, 0, dimension * num_classes * sizeof(float));
-        cudaMemset(&d_class_counts, 0, num_classes * sizeof(uint32_t));
-        update_centroids<<<grid_size, block_size, block_size * sizeof(uint32_t)>>>(points_tex, d_centroids, d_class_counts, d_classifications);
+        // Manual reduction
+        memset(new_centroids, 0, num_classes * dimension * sizeof(float));
+        memset(class_counts, 0, num_classes * sizeof(uint32_t));
+        for (uint32_t p = 0; p < num_points; ++p) {
+            for (uint8_t d = 0; d < dimension; ++d)
+                new_centroids[dimension * classifications[p] + d] += points[dimension * p + d];
+            class_counts[classifications[p]] += 1;
+        }
 
-        cudaMemcpy(&new_centroids, &d_centroids, dimension * num_classes * sizeof(float), cudaMemcpyDeviceToHost);
-        
+        for (uint32_t k = 0; k < num_classes ; ++k)
+            for (uint8_t d = 0; d < dimension; ++d)
+                new_centroids[dimension * k + d] /= class_counts[k];
+
         // Check convergence
         bool all_centroids_converged = true;
         for (uint32_t k = 0; k < num_classes; ++k) {
@@ -232,13 +212,18 @@ std::vector<uint32_t> classify_kmeans(
     }
 
     // Perform last classification
-    cudaMemcpy(&d_centroids, &centroids, num_classes * dimension * sizeof(float), cudaMemcpyHostToDevice);
+    handle_cuda_error(cudaMemcpy(d_centroids, centroids, num_classes * dimension * sizeof(float), cudaMemcpyHostToDevice));
     classify<<<grid_size, block_size, num_classes * dimension * sizeof(float)>>>(points_tex, d_centroids, d_classifications);
-    cudaMemcpy(classifications, d_classifications, num_points * sizeof(uint32_t), cudaMemcpyDeviceToHost);
+    cudaDeviceSynchronize();
+    handle_cuda_error(cudaMemcpy(classifications, d_classifications, num_points * sizeof(uint32_t), cudaMemcpyDeviceToHost));
 
+    handle_cuda_error(cudaDestroyTextureObject(points_tex));
+    handle_cuda_error(cudaFree(d_points));
 
-    cudaDestroyTextureObject(points_tex);
-    cudaFree(&d_points);
+    handle_cuda_error(cudaFree(d_class_counts));
+    handle_cuda_error(cudaFree(d_classifications));
+
+    delete[] new_centroids, class_counts;
 
     // return last classification
     std::vector<uint32_t> results;
