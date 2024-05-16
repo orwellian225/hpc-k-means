@@ -73,26 +73,13 @@ int main(int argc, char **argv) {
     double end = MPI_Wtime();
 
 
-    std::vector<NVector> points_vec, centroid_vec;
-    for (size_t i = 0; i < num_points; ++i) {
-        NVector temp(num_dimensions, 0.);
-        for (uint8_t d = 0; d < num_dimensions; ++d)
-            temp[d] = points[num_dimensions * i + d];
-
-        points_vec.push_back(temp);
-    }
-
-    for (size_t i = 0; i < num_classes; ++i) {
-        NVector temp(num_dimensions, 0.);
-        for (uint8_t d = 0; d < num_dimensions; ++d)
-            temp[d] = centroids[num_dimensions * i + d];
-
-        centroid_vec.push_back(temp);
-    }
-
     if (world_rank == 0) {
         double duration = (end - start) * 1000; // MPI_Wtime is in seconds
-        save_classification(points_vec, centroid_vec, classifications, outfile_path);
+        save_classifications(
+            num_points, num_classes, num_dimensions,
+            points, centroids, classifications.data(),
+            outfile_path
+        );
         fmt::println("Time: {:.2f} ms", duration);
     }
 

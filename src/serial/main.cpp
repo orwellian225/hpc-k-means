@@ -62,25 +62,11 @@ int main(int argc, char **argv) {
 
     std::chrono::duration<float, std::milli> duration(end - start);
 
-    std::vector<NVector> centroid_vec, points_vec;
-    for (size_t i = 0; i < num_points; ++i) {
-        NVector temp(num_dimensions, 0.);
-        for (uint8_t d = 0; d < num_dimensions; ++d)
-            temp[d] = points[num_dimensions * i + d];
-
-        points_vec.push_back(temp);
-    }
-
-    for (size_t i = 0; i < num_classes; ++i) {
-        NVector temp(num_dimensions, 0.);
-        for (uint8_t d = 0; d < num_dimensions; ++d)
-            temp[d] = centroids[num_dimensions * i + d];
-
-        centroid_vec.push_back(temp);
-    }
-
-    std::vector<uint32_t> classifications(classes, classes + num_points);
-    save_classification(points_vec, centroid_vec, classifications, outfile_path);
+    save_classifications(
+        num_points, num_classes, num_dimensions,
+        points, centroids, classes,
+        outfile_path
+    );
     fmt::println("Time: {:.2f} ms", duration.count());
 
     return 0;

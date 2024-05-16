@@ -54,21 +54,35 @@ void load_points(
     fclose(infile);
 }
 
-void save_classification(const std::vector<NVector>& points, const std::vector<NVector>& centroids, const std::vector<uint32_t>& classifications, std::string outfile_path) {
+std::string nvec_to_csv_string(const float *nvec, const uint8_t dimension) {
+    std::string result = fmt::format("{}", nvec[0]);
+    for (uint8_t d = 1; d < dimension; ++d)
+        result = fmt::format("{},{}", result, nvec[d]);
+
+    return result;
+}
+
+void save_classifications(
+    const uint32_t num_points, const uint32_t num_classes, const uint8_t dimension,
+    const float *points, const float *centroids, const uint32_t *classes, 
+    std::string outfile_path
+) {
     FILE *outfile = fopen(outfile_path.c_str(), "w+");
     if (outfile == nullptr) {
         fmt::println(stderr, "Failed to open file {}", outfile_path);
         exit(EXIT_FAILURE);
     }
 
-    for (auto point: points)
-        fmt::println(outfile, "{}", point.to_csv_string());
+    for (uint32_t p = 0; p < num_points; ++p)
+        fmt::println(outfile, "{}", nvec_to_csv_string(&points[dimension * p], dimension));
+
     fmt::println(outfile, "");
-    for (auto centroid: centroids)
-        fmt::println(outfile, "{}", centroid.to_csv_string());
+    for (uint32_t k = 0; k < num_classes; ++k)
+        fmt::println(outfile, "{}", nvec_to_csv_string(&centroids[dimension * k], dimension));
+
     fmt::println(outfile, "");
-    for (uint32_t p = 0; p < classifications.size(); ++p)
-        fmt::println(outfile, "{},{}", p, classifications[p]);
+    for (uint32_t p = 0; p < num_points; ++p)
+        fmt::println(outfile, "{},{}", p, classes[p]);
 
     fclose(outfile);
 }
