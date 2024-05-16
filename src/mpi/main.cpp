@@ -15,14 +15,15 @@
 #include "support.hpp"
 
 int main(int argc, char **argv) {
-    if (argc != 7) { 
-        fmt::println(stderr, "Incorrect arguments - {} != 7", argc);
+    if (argc != 8) {
+        fmt::println(stderr, "Incorrect arguments");
         fmt::println(stderr, "\tNumber of dimensions");
         fmt::println(stderr, "\tNumber of points");
         fmt::println(stderr, "\tInput data file");
         fmt::println(stderr, "\tOutput data file");
         fmt::println(stderr, "\tNumber of classes");
         fmt::println(stderr, "\tMax number of iterations");
+        fmt::println(stderr, "\tRandom seed");
         exit(EXIT_FAILURE);
     }
 
@@ -32,6 +33,7 @@ int main(int argc, char **argv) {
     std::string outfile_path = std::string(argv[4]);
     uint32_t num_classes = std::atoi(argv[5]);
     uint32_t max_iterations = std::atoi(argv[6]);
+    uint32_t seed = std::stoi(argv[7]);
 
     int32_t world_size, world_rank;
     MPI_Init(&argc, &argv);
@@ -64,7 +66,7 @@ int main(int argc, char **argv) {
         init_centroids(
             num_points, num_classes, num_dimensions, 
             points, centroids,
-            0
+            seed
         );
     } 
 
