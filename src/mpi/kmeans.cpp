@@ -71,7 +71,6 @@ std::vector<NVector> kmeansplusplus_centroids(uint32_t num_centroids, uint8_t nu
 }
 
 float vec_distance(const float *vec_1, const float *vec_2, uint8_t dimension) {
-
     float sum = 0;
     for (uint8_t d = 0; d < dimension; ++d)
         sum += (vec_1[d] - vec_2[d]) * (vec_1[d] - vec_2[d]);
