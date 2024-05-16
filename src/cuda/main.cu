@@ -3,7 +3,6 @@
 
 #include <fmt/core.h>
 
-#include "nvector.hpp"
 #include "support.hpp"
 #include "cuda/kmeans.cuh"
 

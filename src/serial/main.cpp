@@ -9,7 +9,6 @@
 
 #include <fmt/core.h>
 
-#include "nvector.hpp"
 #include "support.hpp"
 #include "serial/kmeans.hpp"
 

@@ -5,7 +5,6 @@
 
 #include <fmt/core.h>
 
-#include "nvector.hpp"
 #include "support.hpp"
 
 float nvec_distance(const float *nvec_a, const float *nvec_b, const uint8_t dimension) {

@@ -12,7 +12,6 @@
 #include <fmt/core.h>
 
 #include "mpi/kmeans.hpp"
-#include "nvector.hpp"
 #include "support.hpp"
 
 int main(int argc, char **argv) {
