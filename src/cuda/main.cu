@@ -37,11 +37,7 @@ int main(int argc, char **argv) {
 
     float *centroids = new float[num_classes * num_dimensions];
     float *points = new float[num_points * num_dimensions];
-    std::vector<NVector> points_loaded_vec = load_points(num_points, num_dimensions, infile_path);
-
-    for (size_t i = 0; i < num_points; ++i)
-        for (size_t d = 0; d < num_dimensions; ++d)
-            points[num_dimensions * i + d] = points_loaded_vec[i][d];
+    load_points(num_points, num_dimensions, points, infile_path);
 
     cudaEventCreate(&start);
     cudaEventCreate(&end);

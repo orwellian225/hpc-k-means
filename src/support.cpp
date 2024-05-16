@@ -17,24 +17,25 @@ float nvec_distance(const float *nvec_a, const float *nvec_b, const uint8_t dime
     return std::sqrt(sum);
 }
 
-std::vector<NVector> load_points(uint32_t num_points, uint8_t num_dimensions, std::string infile_path) {
+void load_points(
+    const uint32_t num_points, const uint8_t dimension, 
+    float *points,
+    std::string infile_path
+) {
     FILE *infile = fopen(infile_path.c_str(), "r+");
     if (infile == nullptr) {
         fmt::println(stderr, "Failed to open file {}", infile_path);
         exit(EXIT_FAILURE);
     }
 
-    NVector *points;
-
     char linebuffer[1024];
     size_t delimiter_pos;
     std::string line, token;
 
-    points = new NVector[num_points];
-    for (uint32_t i = 0; i < num_points; ++i) {
+    for (uint32_t p = 0; p < num_points; ++p) {
         if (feof(infile)) {
             fmt::println(stderr, "Not enough points in specified file");
-            fmt::println(stderr, "\tOnly found {} of {}", i, num_points);
+            fmt::println(stderr, "\tOnly found {} of {}", p, num_points);
             exit(EXIT_FAILURE);
         }
 
@@ -42,21 +43,15 @@ std::vector<NVector> load_points(uint32_t num_points, uint8_t num_dimensions, st
         line = std::string(linebuffer);
         line.pop_back(); // remove newline char
 
-        float *values = new float[num_dimensions];
-        for (uint8_t d = 0; d < num_dimensions; ++d) {
+        for (uint8_t d = 0; d < dimension; ++d) {
             delimiter_pos = line.find(",");
             token = line.substr(0, delimiter_pos);
             line.erase(0, delimiter_pos + 1);
-            values[d] = std::stof(token);
+            points[dimension * p + d] = std::stof(token);
         }
-
-        points[i].num_dimensions = num_dimensions;
-        points[i].data = values;
     }
 
     fclose(infile);
-
-    return std::vector<NVector>(points, points + num_points);
 }
 
 void save_classification(const std::vector<NVector>& points, const std::vector<NVector>& centroids, const std::vector<uint32_t>& classifications, std::string outfile_path) {

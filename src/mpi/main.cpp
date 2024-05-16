@@ -55,12 +55,7 @@ int main(int argc, char **argv) {
     float *points = new float[num_points * num_dimensions];
 
     if (world_rank == 0) {
-        std::vector<NVector> points_vec = load_points(num_points, num_dimensions, infile_path);
-        // send to all nodes
-
-        for (size_t i = 0; i < num_points; ++i)
-            for (size_t d = 0; d < num_dimensions; ++d)
-                points[num_dimensions * i + d] = points_vec[i][d];
+        load_points(num_points, num_dimensions, points, infile_path);
     }
 
     double start = MPI_Wtime();

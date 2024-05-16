@@ -38,15 +38,11 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    std::vector<NVector> points_vec = load_points(num_points, num_dimensions, infile_path);
 
     float *points = new float[num_dimensions * num_points];
     float *centroids = new float[num_dimensions * num_classes];
     uint32_t *classes = new uint32_t[num_points];
-
-    for (size_t i = 0; i < num_points; ++i)
-        for (size_t d = 0; d < num_dimensions; ++d)
-            points[num_dimensions * i + d] = points_vec[i][d];
+    load_points(num_points, num_dimensions, points, infile_path);
 
     auto start = std::chrono::high_resolution_clock::now();
     
@@ -66,8 +62,7 @@ int main(int argc, char **argv) {
 
     std::chrono::duration<float, std::milli> duration(end - start);
 
-    std::vector<NVector> centroid_vec;
-    points_vec.clear();
+    std::vector<NVector> centroid_vec, points_vec;
     for (size_t i = 0; i < num_points; ++i) {
         NVector temp(num_dimensions, 0.);
         for (uint8_t d = 0; d < num_dimensions; ++d)
