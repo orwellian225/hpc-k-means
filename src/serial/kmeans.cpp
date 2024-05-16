@@ -142,5 +142,18 @@ std::vector<uint32_t> classify_kmeans(const std::vector<NVector>& points, std::v
             previous_centroids.push_back(NVector(centroids[k]));
     }
 
+    classifications.clear();
+
+    for (size_t p = 0; p < points.size(); ++p) {
+        uint32_t closest_class = 0;
+        for (uint32_t k = 0; k < num_classes; ++k) {
+            if (points[p].distance_to(centroids[k]) < points[p].distance_to(centroids[closest_class])) {
+                closest_class = k;
+            }
+        }
+
+        classifications.push_back(closest_class);
+    }
+
     return classifications;
 }
