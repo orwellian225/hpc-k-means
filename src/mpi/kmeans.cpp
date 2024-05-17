@@ -137,9 +137,9 @@ void classify_kmeans(
     delete[] process_point_distribution;
     delete[] process_point_displacements;
     delete[] local_classifications;
-    delete[] local_num_classifications_per_class
+    delete[] local_num_classifications_per_class;
     delete[] num_classifications_per_class;
-    delete[] local_new_centroids
+    delete[] local_new_centroids;
     delete[] new_centroids;
 
     MPI_Type_free(&nvec_row_t);

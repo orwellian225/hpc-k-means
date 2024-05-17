@@ -1,3 +1,5 @@
 Dimension,Num Points,Num Classes,Data file,Serial All Time (ms),Serial Initialize Time (ms),Serial Classify Time (ms), Serial Update Time (ms), Serial Last Classify Time (ms),MPI All Time (ms),MPI Initialize Time (ms),MPI Classify Time (ms), MPI Update Time (ms), MPI Last Classify Time (ms),CUDA All Time (ms),CUDA Initialize Time (ms),CUDA Classify Time (ms), CUDA Update Time (ms), CUDA Last Classify Time (ms),Serial output file,MPI output file,CUDA output file
 2,1000,3,data/1000_2D.csv,1.0720,0.6993,8.6012,results/1000_2D_3C_serial.csv,results/1000_2D_3C_mpi.csv,results/1000_2D_3C_cuda.csv
 10,1000,5,data/1000_10D.csv,10.3038,6.4890,30.0500,results/1000_10D_5C_serial.csv,results/1000_10D_5C_mpi.csv,results/1000_10D_5C_cuda.csv
+10,1000,10,data/1000_10D.csv,22.1218,2.3338,17.8149,1.5382,0.4126,11.6298,1109.3940,2.2699,26.5984,1.7166,0.6666,results/1000_10D_10C_serial.csv,results/1000_10D_10C_mpi.csv,results/1000_10D_10C_cuda.csv
+10,1000,10,data/1000_10D.csv,31.0121,2.1424,26.1128,2.2756,0.4399,21.7328,2.3427,17.4601,1.5593,0.3064,778.2468,2.2680,39.8090,2.5962,0.6595,results/1000_10D_10C_serial.csv,results/1000_10D_10C_mpi.csv,results/1000_10D_10C_cuda.csv

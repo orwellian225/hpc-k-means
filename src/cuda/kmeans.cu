@@ -1,3 +1,4 @@
+#include <chrono>
 #include <vector>
 #include <random>
 
@@ -125,8 +126,8 @@ void classify_kmeans(
 
         cudaEventSynchronize(classify_end);
         float classify_duration = 0;
-        cudaEventElapsedTime(&classify_duration, start, stop);
-        timer->cumulative_classify_time_ms += classify;
+        cudaEventElapsedTime(&classify_duration, classify_start, classify_end);
+        timer->cumulative_classify_time_ms += classify_duration;
 
         handle_cuda_error(cudaMemcpy(classes, d_classifications, num_points * sizeof(uint32_t), cudaMemcpyDeviceToHost));
 
@@ -169,7 +170,7 @@ void classify_kmeans(
 
     cudaEventSynchronize(classify_end);
     float classify_duration = 0;
-    cudaEventElapsedTime(&classify_duration, start, stop);
+    cudaEventElapsedTime(&classify_duration, classify_start, classify_end);
     timer->final_classify_time_ms = classify_duration;
 
     handle_cuda_error(cudaDestroyTextureObject(points_tex));

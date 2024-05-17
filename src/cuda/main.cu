@@ -33,9 +33,6 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-
-    float duration_ms;
-
     float *points = new float[num_points * num_dimensions];
     float *centroids = new float[num_classes * num_dimensions];
     uint32_t *classes = new uint32_t[num_points];

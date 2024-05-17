@@ -20,8 +20,8 @@ target_include_directories(kmeans-serial PUBLIC include PUBLIC lib/fmt/include)
 target_link_directories(kmeans-serial PRIVATE src lib/fmt/src)
 target_link_libraries(kmeans-serial fmt)
 
+find_package(MPI)
 if (MPI_FOUND)
-    find_package(MPI)
     add_executable(kmeans-mpi
         src/mpi/main.cpp src/mpi/kmeans.cpp
         src/support.cpp
