@@ -137,7 +137,7 @@ void init_centroids(
             sum_distances_sqr += probabilites[p] * probabilites[p];
 
         for (uint32_t p = 0; p < num_points; ++p)
-            probabilites[p] / sum_distances_sqr;
+            probabilites[p] /= sum_distances_sqr;
 
         std::discrete_distribution distance_dist(probabilites, probabilites + num_points);
         ++most_recent_centroid;

@@ -1,3 +1,4 @@
+#include <chrono>
 #include <cmath>
 #include <cstring>
 #include <memory>
@@ -53,15 +54,21 @@ void kmeans(
     uint32_t *class_counts = new uint32_t[num_classes];
     float *new_centroids = new float[dimension * num_classes];
 
+    timer->cumulative_update_time_ms = 0.;
+    timer->cumulative_classify_time_ms = 0.;
     for (uint32_t iteration = 0; iteration < max_iterations; ++iteration) {
 
         // Classify the points
+        auto classify_start = std::chrono::high_resolution_clock::now();
         classify_points(
             num_points, num_classes, dimension,
             points, centroids, classes
         );
+        auto classify_end = std::chrono::high_resolution_clock::now();
+        timer->cumulative_classify_time_ms += std::chrono::duration<float, std::milli>(classify_end - classify_start).count();
 
         // Update the centroids
+        auto update_start = std::chrono::high_resolution_clock::now();
         std::memset(new_centroids, 0, dimension * num_classes * sizeof(float));
         std::memset(class_counts, 0, num_classes * sizeof(uint32_t));
         for (uint32_t p = 0; p < num_points; ++p) {
@@ -73,6 +80,8 @@ void kmeans(
         for (uint32_t k = 0; k < num_classes; ++k)
             for (uint8_t d = 0; d < dimension; ++d)
                 new_centroids[dimension * k + d] /= class_counts[k];
+        auto update_end = std::chrono::high_resolution_clock::now();
+        timer->cumulative_update_time_ms += std::chrono::duration<float, std::milli>(update_end - update_start).count();
 
         bool converged = true;
         for (uint32_t k = 0; k < num_classes; ++k)
@@ -84,10 +93,16 @@ void kmeans(
         memcpy(centroids, new_centroids, num_classes * dimension * sizeof(float));
     }
 
+
+    auto last_classify_start = std::chrono::high_resolution_clock::now();
     classify_points(
         num_points, num_classes, dimension,
         points, centroids, classes
     );
+    auto last_classify_end = std::chrono::high_resolution_clock::now();
+    timer->final_classify_time_ms = std::chrono::duration<float, std::milli>(last_classify_end - last_classify_start).count();
 
-    delete[] new_centroids, class_counts;
+
+    delete[] new_centroids;
+    delete[] class_counts;
 }

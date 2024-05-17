@@ -43,32 +43,42 @@ int main(int argc, char **argv) {
     float *points = new float[num_dimensions * num_points];
     float *centroids = new float[num_dimensions * num_classes];
     uint32_t *classes = new uint32_t[num_points];
+
+    TimeBreakdown timer = {};
+
     load_points(num_points, num_dimensions, points, infile_path);
 
-    auto start = std::chrono::high_resolution_clock::now();
+    auto global_start = std::chrono::high_resolution_clock::now();
     
+    auto initilize_start = std::chrono::high_resolution_clock::now();
     init_centroids(
         num_points, num_classes, num_dimensions, 
         points, centroids,
         seed
     );
+    auto initilize_end = std::chrono::high_resolution_clock::now();
+    timer.initilize_time_ms = std::chrono::duration<float, std::milli>(initilize_end - initilize_start).count();
 
     kmeans(
         num_points, num_classes, num_dimensions, 
         points, centroids, classes, 
-        max_iterations, nullptr
+        max_iterations, &timer
     );
 
-    auto end = std::chrono::high_resolution_clock::now();
-
-    std::chrono::duration<float, std::milli> duration(end - start);
+    auto global_end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<float, std::milli> duration(global_end - global_start);
 
     save_classifications(
         num_points, num_classes, num_dimensions,
         points, centroids, classes,
         outfile_path
     );
-    fmt::println("{:.4f}", duration.count());
+    fmt::println(
+            "{:.4f},{:.4f},{:.4f},{:.4f},{:.4f}", 
+            duration.count(), timer.initilize_time_ms, 
+            timer.cumulative_classify_time_ms, timer.cumulative_update_time_ms, 
+            timer.final_classify_time_ms
+    );
 
     return 0;
 }

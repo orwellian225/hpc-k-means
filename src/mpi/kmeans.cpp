@@ -15,7 +15,7 @@
 void classify_kmeans(
     const uint8_t dimension, const uint32_t num_points, const uint32_t num_classes,
     const float *points, float *centroids, uint32_t *classes,
-    uint32_t max_iterations,
+    uint32_t max_iterations, TimeBreakdown *timer,
     const int32_t rank, const int32_t size, const MPI_Comm comm
 ) {
     MPI_Datatype nvec_row_t, nvec_col_t;
@@ -35,6 +35,9 @@ void classify_kmeans(
         process_point_displacements[i] = i > 0 ? process_point_displacements[i - 1] + process_point_distribution[i] : 0;
     }
 
+    timer->cumulative_update_time_ms = 0.;
+    timer->cumulative_classify_time_ms = 0.;
+
     float *local_points = new float[dimension * num_local_points];
     MPI_Scatterv(points, process_point_distribution, process_point_displacements, nvec_row_t, local_points, num_local_points, nvec_row_t, 0, comm);
 
@@ -47,6 +50,7 @@ void classify_kmeans(
 
     for (uint32_t iteration = 0; iteration < max_iterations; ++iteration) {
         // Classify points
+        double classify_start = MPI_Wtime();
 
         // reset local classes
         for (uint32_t k = 0; k < num_classes; ++k) {
@@ -70,8 +74,11 @@ void classify_kmeans(
             ++local_num_classifications_per_class[closest_centroid];
             local_classifications[i] = closest_centroid;
         }
+        double classify_end = MPI_Wtime();
+        timer->cumulative_classify_time_ms += (classify_end - classify_start) * 1000;
 
         // Update centroids
+        double update_start = MPI_Wtime();
         for (uint32_t p = 0; p < num_local_points; ++p) {
             uint32_t point_class = local_classifications[p];
             for (uint8_t d = 0; d < dimension; ++d) {
@@ -89,6 +96,8 @@ void classify_kmeans(
         }
 
         MPI_Bcast(new_centroids, num_classes, nvec_row_t, 0, comm);
+        double update_end = MPI_Wtime();
+        timer->cumulative_update_time_ms += (update_end - update_start) * 1000;
 
         bool all_centroids_converged = true;
         for (uint32_t k = 0; k < num_classes; ++k) {
@@ -104,6 +113,7 @@ void classify_kmeans(
     }
 
     // Last Classification
+    double last_classify_start = MPI_Wtime();
     for (uint32_t i = 0; i < num_local_points; ++i) {
         uint32_t closest_centroid = 0;
         float closest_distance = nvec_distance(&local_points[dimension * i], &centroids[dimension * closest_centroid], dimension);
@@ -121,11 +131,16 @@ void classify_kmeans(
     }
 
     MPI_Gatherv(local_classifications, num_local_points, MPI_INT, classes, process_point_distribution, process_point_displacements, MPI_INT, 0, comm);
+    double last_classify_end = MPI_Wtime();
+    timer->final_classify_time_ms = (last_classify_end - last_classify_start) * 1000;
 
-    delete[] process_point_distribution, process_point_displacements;
+    delete[] process_point_distribution;
+    delete[] process_point_displacements;
     delete[] local_classifications;
-    delete[] local_num_classifications_per_class, num_classifications_per_class;
-    delete[] local_new_centroids, new_centroids;
+    delete[] local_num_classifications_per_class
+    delete[] num_classifications_per_class;
+    delete[] local_new_centroids
+    delete[] new_centroids;
 
     MPI_Type_free(&nvec_row_t);
 }

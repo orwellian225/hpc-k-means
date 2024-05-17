@@ -66,7 +66,7 @@ __global__ void classify(cudaTextureObject_t points, float *centroids, uint32_t 
 void classify_kmeans(
     const uint8_t dimension, const uint32_t num_points, const uint32_t num_classes,
     const float *points, float *centroids, uint32_t *classes,
-    uint32_t max_iterations
+    uint32_t max_iterations, TimeBreakdown *timer
 ) {
 
     // Send points to texture memory
@@ -96,6 +96,12 @@ void classify_kmeans(
     // handle_cuda_error(cudaMalloc(&d_num_classes, sizeof(uint32_t)));
     // handle_cuda_error(cudaMalloc(&d_dimension, sizeof(uint8_t)));
 
+    cudaEvent_t classify_start;
+    cudaEvent_t classify_end;
+
+    cudaEventCreate(&classify_start);
+    cudaEventCreate(&classify_end);
+
     handle_cuda_error(cudaMemcpyToSymbol(d_num_points, &num_points, sizeof(num_points)));
     handle_cuda_error(cudaMemcpyToSymbol(d_num_classes, &num_classes, sizeof(num_classes)));
     handle_cuda_error(cudaMemcpyToSymbol(d_dimension, &dimension, sizeof(dimension)));
@@ -113,11 +119,19 @@ void classify_kmeans(
     for (uint32_t iteration = 0; iteration < max_iterations; ++iteration) {
         // send centroids to GPU
         handle_cuda_error(cudaMemcpy(d_centroids, centroids, num_classes * dimension * sizeof(float), cudaMemcpyHostToDevice));
+        cudaEventRecord(classify_start);
         classify<<<grid_size, block_size, num_classes * dimension * sizeof(float)>>>(points_tex, d_centroids, d_classifications);
-        cudaDeviceSynchronize();
+        cudaEventRecord(classify_end);
+
+        cudaEventSynchronize(classify_end);
+        float classify_duration = 0;
+        cudaEventElapsedTime(&classify_duration, start, stop);
+        timer->cumulative_classify_time_ms += classify;
+
         handle_cuda_error(cudaMemcpy(classes, d_classifications, num_points * sizeof(uint32_t), cudaMemcpyDeviceToHost));
 
         // Manual reduction
+        auto update_start = std::chrono::high_resolution_clock::now();
         memset(new_centroids, 0, num_classes * dimension * sizeof(float));
         memset(class_counts, 0, num_classes * sizeof(uint32_t));
         for (uint32_t p = 0; p < num_points; ++p) {
@@ -129,6 +143,8 @@ void classify_kmeans(
         for (uint32_t k = 0; k < num_classes ; ++k)
             for (uint8_t d = 0; d < dimension; ++d)
                 new_centroids[dimension * k + d] /= class_counts[k];
+        auto update_end = std::chrono::high_resolution_clock::now();
+        timer->cumulative_update_time_ms += std::chrono::duration<float, std::milli>(update_end - update_start).count();
 
         // Check convergence
         bool all_centroids_converged = true;
@@ -146,9 +162,15 @@ void classify_kmeans(
 
     // Perform last classification
     handle_cuda_error(cudaMemcpy(d_centroids, centroids, num_classes * dimension * sizeof(float), cudaMemcpyHostToDevice));
+    cudaEventRecord(classify_start);
     classify<<<grid_size, block_size, num_classes * dimension * sizeof(float)>>>(points_tex, d_centroids, d_classifications);
-    cudaDeviceSynchronize();
+    cudaEventRecord(classify_end);
     handle_cuda_error(cudaMemcpy(classes, d_classifications, num_points * sizeof(uint32_t), cudaMemcpyDeviceToHost));
+
+    cudaEventSynchronize(classify_end);
+    float classify_duration = 0;
+    cudaEventElapsedTime(&classify_duration, start, stop);
+    timer->final_classify_time_ms = classify_duration;
 
     handle_cuda_error(cudaDestroyTextureObject(points_tex));
     handle_cuda_error(cudaFree(d_points));
