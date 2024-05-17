@@ -1,5 +1,7 @@
 import sys
 import numpy as np
+import matplotlib.pyplot as plt
+from perlin_noise import PerlinNoise
 
 def main():
     if len(sys.argv) == 4:
@@ -12,11 +14,24 @@ def main():
         outdir = str(input("Enter the output directory for the data: "))
 
     outfile = f"{num_points}_{num_dimensions}D.csv"
-    print(f"Generating {num_points} {num_dimensions}D points in space in file {outdir + outfile}")
 
-    data = np.random.random((num_points, num_dimensions)) * num_points - num_points / 2
+    data = np.zeros((num_points, num_points, num_dimensions))
+
+    for d in range(num_dimensions):
+        noise = PerlinNoise(octaves=10)
+        
+        for i in range(num_points):
+            for j in range(num_points):
+                data[i,j,d] = noise([i / num_points, j / num_points])
+
+    min_data = np.min(data)
+    max_data = np.max(data)
+    data = (data - min_data) / (max_data - min_data)
+    data = data.reshape((num_points * num_points, num_dimensions))
+    # print(data)
 
     np.savetxt(outdir + outfile, data, delimiter=",")
+
 
 if __name__ == "__main__":
     main()
