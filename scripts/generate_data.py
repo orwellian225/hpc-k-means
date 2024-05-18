@@ -13,7 +13,7 @@ def main():
         num_points = int(input("Enter the number of points: "))
         outdir = str(input("Enter the output directory for the data: "))
 
-    outfile = f"{num_points}_{num_dimensions}D.csv"
+    outfile = f"{num_points * num_points}_{num_dimensions}D.csv"
 
     data = np.zeros((num_points, num_points, num_dimensions))
 
