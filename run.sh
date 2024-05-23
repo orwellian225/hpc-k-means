@@ -1,6 +1,7 @@
 #!/bin/sh
 
-num_points=512
+num_root_points=512
+num_points=$((num_root_points*num_root_points)) 
 num_classes=10
 dimension=3
 
