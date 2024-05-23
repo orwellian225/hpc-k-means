@@ -1,5 +1,68 @@
 # COMS4040A HPC Project
 
+## Quick Execution
+
+```bash
+./setup.sh
+./compile.sh
+./run.sh
+```
+
+## Execution
+
+### Dependencies
+
+* CUDA - To run the CUDA implementation
+* MPI - To run the MPI implementation
+* CMake - To compile any implementation
+* fmtlib - To compile any implementation
+* Python3 - To run support scripts
+
+### Setup
+
+```bash
+git submodule update --init --recursive
+mkdir -p build  data/images results/images
+cmake -S . -B build/
+```
+
+### Compile
+
+```bash
+cd build
+make
+```
+
+### Generating Test Data
+
+Will generate $d$ Perlin Noise textures of size $n \times n$ and then merge the textures into a single data set where each texture forms one dimension.
+
+```bash
+python3 scripts/generate_data.py <data dimension> <number of points> data/
+```
+
+> - $n$ is the number of points
+> - $d$ is the number of dimensions
+
+### Running
+
+All implementations take the same arguments:
+
+Binary names:
+* Serial: `kmeans-serial`
+* MPI: `kmeans-mpi`
+* CUDA: `kmeans-cuda`
+
+```bash
+<implementation-binary> <data dimension> <number of points> <data file> <output file> <maximum iterations> <random seed>
+```
+
+> The MPI binary must be executed with mpiexec / mpirun in the following manner:
+>
+> ```bash
+> mpiexec -np <number of processors> <normal binary execution and args>
+> ```
+
 ## Data
 
 * $n$ points

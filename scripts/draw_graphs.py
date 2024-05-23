@@ -20,14 +20,15 @@ def main():
     # print(df_filtered[["Dimension", "Num Points", "Num Classes", "Parallel Implementation", "Speedup"]])
 
     colours = {
-        ('mpi', 2): '#FF9999',
-        ('mpi', 5): '#FF6666',
-        ('mpi', 10): '#FF3333',
+        ('mpi', 2): '#190000',
+        ('mpi', 5): '#660000',
+        ('mpi', 10): '#b30000',
         ('mpi', 100): '#FF0000',
-        ('cuda', 2): '#6aA765',
-        ('cuda', 5): '#487748',
-        ('cuda', 10): '#2B472B',
-        ('cuda', 100): '#0E180E',
+
+        ('cuda', 2): '#c3f550',
+        ('cuda', 5): '#b7e892',
+        ('cuda', 10): '#b7e892',
+        ('cuda', 100): '#00ff00',
     }
 
     plt.figure(figsize=(10,6))
@@ -41,7 +42,31 @@ def main():
     plt.ylabel("Speedup")
     plt.title('Speedup vs Number of Points')
     plt.legend(title='Parallel Implementation', loc="upper left")
-    plt.savefig('test.pdf')
+    plt.savefig('speedup.pdf')
+
+    plt.figure(figsize=(10,6))
+    for key_impl, grp_impl in df_filtered.groupby('Parallel Implementation'):
+        for key_num_classes, grp_num_classes in grp_impl.groupby('Num Classes'):
+            plt.plot(grp_num_classes['Num Points'],  grp_num_classes["Loss"], color=colours[(key_impl, key_num_classes)], label=f"{key_impl}: K = {key_num_classes}")
+
+    plt.xscale('log')
+    plt.xlabel("Num Points")
+    plt.legend(title='Parallel Implementation', loc="upper left")
+    plt.title('Loss vs Number of Points')
+    plt.ylabel("Loss")
+    plt.savefig('loss.pdf')
+
+    plt.figure(figsize=(10,6))
+    plt.figure(figsize=(10,6))
+    for key_impl, grp_impl in df_filtered.groupby('Parallel Implementation'):
+        for key_num_classes, grp_num_classes in grp_impl.groupby('Num Classes'):
+            plt.plot(grp_num_classes['Num Points'],  (1 - grp_num_classes["Errors"] / grp_num_classes["Num Points"]) * 100 , color=colours[(key_impl, key_num_classes)], label=f"{key_impl}: K = {key_num_classes}")
+    plt.xscale('log')
+    plt.xlabel("Num Points")
+    plt.legend(title='Parallel Implementation', loc="upper left")
+    plt.title('Accuracy vs Number of Points')
+    plt.ylabel("Accuracy")
+    plt.savefig('accuracy.pdf')
 
 if __name__ == "__main__":
     main()
