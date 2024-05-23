@@ -10,7 +10,7 @@ serial_out_filepath="results/${num_points}_${dimension}D_${num_classes}C_serial.
 mpi_out_filepath="results/${num_points}_${dimension}D_${num_classes}C_mpi.csv"
 cuda_out_filepath="results/${num_points}_${dimension}D_${num_classes}C_cuda.csv"
 
-python3 scripts/generate_data.py $dimension $num_points data/
+python3 scripts/generate_data.py $dimension $num_root_points data/
 
 echo "Execution times:"
 serial_time=$(build/kmeans-serial $dimension $num_points $data_filepath $serial_out_filepath $num_classes 1000 0)
